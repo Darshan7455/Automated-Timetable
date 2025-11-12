@@ -1,0 +1,246 @@
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #222;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+.app-container {
+  width: 85%;
+  max-width: 900px;
+  margin: 40px auto;
+  text-align: center;
+  padding-bottom: 40px;
+}
+
+h1 {
+  color: #fff;
+  font-size: 2.5em;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.subtext {
+  font-size: 16px;
+  color: #f0f0f0;
+  margin-bottom: 30px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  margin: 20px auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  text-align: left;
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.card h2 {
+  margin-top: 0;
+  color: #333;
+  font-size: 1.5em;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+/* File Upload Styles */
+.file-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.file-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-input-wrapper label {
+  display: block;
+  font-weight: 600;
+  color: #555;
+}
+
+.file-name {
+  color: #28a745;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+input[type="number"],
+input[type="file"] {
+  display: block;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+input[type="file"]:hover,
+input[type="number"]:hover {
+  border-color: #667eea;
+}
+
+input[type="file"]:focus,
+input[type="number"]:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  margin-top: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.upload-button {
+  width: 100%;
+  margin-top: 20px;
+}
+
+/* Action Buttons */
+.actions {
+  text-align: center;
+}
+
+.button-group {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.action-button {
+  flex: 1;
+  min-width: 200px;
+  padding: 14px 24px;
+  font-size: 16px;
+}
+
+.action-button.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.action-button.secondary {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+/* Status Box */
+.status-box {
+  background: linear-gradient(135deg, #e0f7fa 0%, #e1bee7 100%);
+  text-align: center;
+}
+
+.status-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  margin: 10px 0;
+}
+
+/* Downloads Section */
+.downloads {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.downloads h3 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.download-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.download-button {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  width: 80%;
+  max-width: 400px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+  transition: all 0.3s;
+}
+
+.download-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(17, 153, 142, 0.5);
+}
+
+/* Config Grid */
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .app-container {
+    width: 95%;
+  }
+
+  h1 {
+    font-size: 2em;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  .action-button {
+    min-width: 100%;
+  }
+
+  .download-button {
+    width: 100%;
+  }
+}

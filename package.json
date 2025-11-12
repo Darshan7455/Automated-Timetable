@@ -1,0 +1,20 @@
+{
+  "name": "timetable-main",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && npm --prefix timetable-ui install",
+    "start": "node server.js",
+    "start:ui": "npm --prefix timetable-ui start",
+    "dev": "npm run start:ui",
+    "dev:all": "concurrently \"npm start\" \"npm run start:ui\""
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

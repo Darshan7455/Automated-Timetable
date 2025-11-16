@@ -226,12 +226,60 @@ The current version satisfies the following requirements:
 
 ---
 
+### 6.5 Exam Timetable with Seat Arrangement
+
+The system now includes comprehensive **exam timetable generation** with automatic **seat arrangement** functionality:
+
+#### Features Implemented
+
+- **Automated Exam Scheduling**: Generate exam schedules across multiple dates with configurable time slots
+- **Room Allocation**: Automatically assigns exam rooms based on student count and room capacity
+- **Seat Arrangement**: Generates detailed seat allocations showing which students sit where
+- **Visual Seat Maps**: Grid-based seat maps for each exam room (10 seats per row layout)
+- **Student ID Assignment**: Sequential student ID generation by department and semester
+- **Roll Number Ranges**: Shows student roll ranges for each room allocation
+
+#### Running Exam Timetable Generator
+
+```bash
+python exam_timetable.py
+```
+
+#### Output File: `exam_timetable.xlsx`
+
+The generated Excel file contains:
+
+1. **Overview** - Summary statistics and exam dates
+2. **Exam Schedule** - Simplified date-wise exam list
+3. **Detailed Schedule** - Complete exam details with room allocations showing seat counts
+4. **Seat Arrangement** - Student seat allocations with roll number ranges per room
+5. **Seat Maps** - Visual grid-based seat maps for printing and display
+6. **Date-wise sheets** - Individual schedules for each exam date
+7. **Unscheduled Exams** - Courses that couldn't be scheduled (if any)
+
+#### Configuration Files
+
+- **exam_config.json**: Configure exam duration and slots per day
+- **exam_dates.json**: Specify exam dates
+- **combined.csv**: Course data with student counts
+- **rooms.csv**: Room data with capacities
+
+#### Use Cases
+
+- **For Administrators**: Plan seating capacity and room requirements
+- **For Exam Supervisors**: Print seat maps to display outside exam rooms
+- **For Students**: Know exact room and seat assignments
+
+📖 **See [SEAT_ARRANGEMENT_GUIDE.md](SEAT_ARRANGEMENT_GUIDE.md) for detailed documentation**
+
+---
+
 ### 7. Future Work
 
 The following features are planned for future versions:
 
 - **UI Development**: Add a user interface (e.g., Flask web app or Tkinter desktop app) to allow coordinators, faculty, and students to interact with the system directly.
-- **Exam Scheduling (REQ-15-EXAM)**: Implement exam timetable scheduling with seating arrangements and minimize exam days.
+- ~~**Exam Scheduling (REQ-15-EXAM)**: Implement exam timetable scheduling with seating arrangements and minimize exam days.~~ ✅ **COMPLETED**
 - **Analytics Reports (REQ-16-ANALYTICS)**: Enhance reports on room usage, instructor effort, and student effort.
 - **Faculty Preferences (REQ-11-FACULTY)**: Improve incorporation of faculty scheduling preferences (e.g., preferred days/times).
 - **Reserved Time Slots (REQ-12-COORD)**: Add capability for coordinators to reserve specific time slots.

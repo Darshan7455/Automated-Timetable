@@ -16,19 +16,29 @@ function App() {
 
   return (
     <div className="app-container">
-      <h1>🕒 Timetable Automation System</h1>
-      <p className="subtext">
-        Upload CSV files, set configurations, and generate timetables easily.
-      </p>
+      <header className="app-header">
+        <div className="header-content">
+          <div className="logo-section">
+            <span className="logo-icon">📅</span>
+            <div>
+              <h1>Timetable Generator</h1>
+              <p className="subtext">
+                Advanced scheduling system for academic institutions
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
 
-      <FileUpload setStatus={setStatus} />
-      {/* <ConfigPanel config={config} setConfig={setConfig} /> */}
-      <ActionButtons
-        setStatus={setStatus}
-        setDownloads={setDownloads}
-        config={config}
-      />
-      <StatusBox status={status} downloads={downloads} />
+      <div className="main-content">
+        <FileUpload setStatus={setStatus} />
+        <ActionButtons
+          setStatus={setStatus}
+          setDownloads={setDownloads}
+          config={config}
+        />
+        <StatusBox status={status} downloads={downloads} />
+      </div>
     </div>
   );
 }

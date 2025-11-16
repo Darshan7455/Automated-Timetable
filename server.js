@@ -8,12 +8,10 @@ const { spawn } = require('child_process');
 const app = express();
 const PORT = 5000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static('uploads'));
 
-// Ensure directories exist
 const uploadsDir = path.join(__dirname, 'uploads');
 const outputsDir = path.join(__dirname, 'outputs');
 [uploadsDir, outputsDir].forEach(dir => {
@@ -22,7 +20,6 @@ const outputsDir = path.join(__dirname, 'outputs');
     }
 });
 
-// Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, uploadsDir);
@@ -34,7 +31,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Helper function to run Python scripts
 const runPythonScript = (scriptName, args = []) => {
     return new Promise((resolve, reject) => {
         const pythonPath = 'python';
@@ -55,11 +51,21 @@ const runPythonScript = (scriptName, args = []) => {
             console.error(`Python stderr: ${data}`);
         });
 
+        python.stdout.on('error', (err) => {
+            console.error(`Python stdout error: ${err}`);
+        });
+
+        python.stderr.on('error', (err) => {
+            console.error(`Python stderr error: ${err}`);
+        });
+
         python.on('close', (code) => {
             if (code === 0) {
                 resolve({ stdout, stderr });
             } else {
-                reject(new Error(`Python script exited with code ${code}\n${stderr}`));
+                const errorMessage = stderr || stdout || `Python script exited with code ${code}`;
+                console.error(`Python script error (code ${code}):`, errorMessage);
+                reject(new Error(errorMessage));
             }
         });
 
@@ -69,7 +75,6 @@ const runPythonScript = (scriptName, args = []) => {
     });
 };
 
-// Helper to get generated files
 const getGeneratedFiles = () => {
     const files = [];
     const possibleFiles = [
@@ -88,7 +93,6 @@ const getGeneratedFiles = () => {
     return files;
 };
 
-// Routes
 app.post('/upload', upload.fields([
     { name: 'combined', maxCount: 1 },
     { name: 'rooms', maxCount: 1 }
@@ -100,7 +104,6 @@ app.post('/upload', upload.fields([
             });
         }
 
-        // Copy files to root directory where Python scripts expect them
         const combinedSource = req.files.combined[0].path;
         const roomsSource = req.files.rooms[0].path;
         const combinedDest = path.join(__dirname, 'combined.csv');
@@ -126,7 +129,6 @@ app.post('/generate-timetable', async (req, res) => {
     try {
         console.log('Generating timetable...');
 
-        // Check if CSV files exist
         const combinedPath = path.join(__dirname, 'combined.csv');
         const roomsPath = path.join(__dirname, 'rooms.csv');
 
@@ -136,10 +138,8 @@ app.post('/generate-timetable', async (req, res) => {
             });
         }
 
-        // Run the timetable generation script
         await runPythonScript('TT_gen.py');
 
-        // Get list of generated files
         const outputs = getGeneratedFiles();
 
         res.json({
@@ -158,8 +158,8 @@ app.post('/generate-timetable', async (req, res) => {
 app.post('/generate-exam', async (req, res) => {
     try {
         console.log('Generating exam timetable...');
+        console.log('Request body:', JSON.stringify(req.body, null, 2));
 
-        // Check if CSV files exist
         const combinedPath = path.join(__dirname, 'combined.csv');
 
         if (!fs.existsSync(combinedPath)) {
@@ -168,10 +168,19 @@ app.post('/generate-exam', async (req, res) => {
             });
         }
 
-        // Run the exam timetable generation script
+        const examDates = req.body.dates || req.body.examDates;
+        
+        const examDatesPath = path.join(__dirname, 'exam_dates.json');
+        if (examDates && Array.isArray(examDates) && examDates.length > 0) {
+            fs.writeFileSync(examDatesPath, JSON.stringify({ dates: examDates }, null, 2), 'utf8');
+            console.log(`Exam dates provided: ${examDates.join(', ')}`);
+        } else {
+            fs.writeFileSync(examDatesPath, JSON.stringify({ dates: [] }, null, 2), 'utf8');
+            console.log('No exam dates provided, using defaults');
+        }
+
         await runPythonScript('exam_timetable.py');
 
-        // Get list of generated files
         const outputs = getGeneratedFiles();
 
         res.json({
@@ -223,7 +232,6 @@ app.get('/outputs', (req, res) => {
     }
 });
 
-// Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', message: 'Backend is running' });
 });

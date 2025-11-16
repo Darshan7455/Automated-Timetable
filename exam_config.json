@@ -1,0 +1,7 @@
+{
+    "exam_duration_minutes": 180,
+    "exam_slots_per_day": 2,
+    "morning_slot_start": "09:00",
+    "afternoon_slot_start": "14:00"
+}
+

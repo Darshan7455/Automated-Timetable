@@ -1,77 +1,58 @@
-# Node modules
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# Node
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
+.pnp/
+.pnp.js
+
+# Production builds
+/build
+/dist
+timetable-ui/build/
+
+# Uploads and outputs
+uploads/
+outputs/
+*.xlsx
+combined.csv
+rooms.csv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
 
 # Logs
-logs
 *.log
-logs/*
-debug.log
-error.log
+logs/
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage reports
-coverage/
-*.lcov
-
-# Dependency directories
-bower_components/
-jspm_packages/
-
-# Build output
-dist/
-build/
-out/
-.next/
-.nuxt/
-.cache/
-.temp/
-
-# Environment files
+# Environment variables
 .env
-.env.*.local
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Editor directories and files
-.vscode/
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Testing
+coverage/
+.nyc_output/
 
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# TypeScript build
-*.tsbuildinfo
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Temporary files
-tmp/
+# Misc
+.cache/
 temp/
-
-# React Native
-.expo/
-.expo-shared/
-
-# Vite
-.vite/
+tmp/

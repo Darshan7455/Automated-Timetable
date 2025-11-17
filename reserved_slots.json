@@ -1,0 +1,39 @@
+{
+  "description": "Reserved time slots for coordinators - courses will not be scheduled in these slots",
+  "reserved_slots": {
+    "Monday": {
+      "ALL": {
+        "semesters": ["ALL"],
+        "slots": []
+      }
+    },
+    "Tuesday": {
+      "ALL": {
+        "semesters": ["ALL"],
+        "slots": []
+      }
+    },
+    "Wednesday": {
+      "CSE": {
+        "semesters": ["2", "4"],
+        "slots": [
+          ["13:00", "14:00"]
+        ]
+      }
+    },
+    "Thursday": {
+      "ALL": {
+        "semesters": ["ALL"],
+        "slots": []
+      }
+    },
+    "Friday": {
+      "ALL": {
+        "semesters": ["ALL"],
+        "slots": [
+          ["16:00", "17:00"]
+        ]
+      }
+    }
+  }
+}

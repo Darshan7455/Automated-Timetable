@@ -1,0 +1,51 @@
+{
+    "timetable_settings": {
+        "working_days": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday"
+        ],
+        "start_time": "09:00",
+        "end_time": "17:30",
+        "slot_duration_minutes": 15
+    },
+    "break_settings": {
+        "morning_break": {
+            "enabled": false,
+            "start_time": "11:00",
+            "duration_minutes": 15
+        },
+        "lunch_break": {
+            "enabled": true,
+            "start_time": "13:30",
+            "end_time": "14:30",
+            "duration_minutes": 60
+        }
+    },
+    "duration_constants": {
+        "lecture_slots": 3,
+        "lab_slots": 4,
+        "tutorial_slots": 2,
+        "self_study_slots": 2,
+        "lecture_duration": 45,
+        "lab_duration": 120,
+        "tutorial_duration": 60,
+        "self_study_duration": 0,
+        "break_duration": 15
+    },
+    "scheduling_preferences": {
+        "elective_slots": [
+            "09:00"
+        ],
+        "allow_back_to_back_lectures": true,
+        "max_lectures_per_day": 6,
+        "prefer_morning_labs": true
+    },
+    "room_allocation": {
+        "large_class_threshold": 100,
+        "lab_requires_computer_room": true,
+        "allow_room_sharing": false
+    }
+}

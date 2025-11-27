@@ -9,9 +9,33 @@ function App() {
   const [status, setStatus] = useState("Ready.");
   const [downloads, setDownloads] = useState([]);
   const [config, setConfig] = useState({
-    lectureDuration: 3,
-    labDuration: 4,
-    examSlots: 2,
+    timetable_settings: {
+      working_days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      start_time: "09:00",
+      end_time: "17:30",
+      slot_duration_minutes: 30
+    },
+    break_settings: {
+      lunch_break: {
+        enabled: true,
+        start_time: "13:30",
+        end_time: "14:30",
+        duration_minutes: 60
+      }
+    },
+    duration_constants: {
+      lecture_slots: 3,
+      lab_slots: 4,
+      tutorial_slots: 2
+    },
+    exam_settings: {
+      enabled_slots: ["morning", "afternoon"]
+    },
+    scheduling_preferences: {
+      allow_back_to_back_lectures: true,
+      max_lectures_per_day: 6,
+      prefer_morning_labs: true
+    }
   });
 
   return (
@@ -32,6 +56,7 @@ function App() {
 
       <div className="main-content">
         <FileUpload setStatus={setStatus} />
+        <ConfigPanel config={config} setConfig={setConfig} />
         <ActionButtons
           setStatus={setStatus}
           setDownloads={setDownloads}

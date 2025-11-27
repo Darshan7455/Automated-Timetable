@@ -19,15 +19,40 @@ export default function FileUpload({ setStatus }) {
 
     try {
       setStatus("📤 Uploading files...");
+      console.log('Uploading files:', { 
+        combined: combined.name, 
+        rooms: rooms.name 
+      });
+      
       const res = await axios.post(`${API_BASE}/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        timeout: 30000 // 30 second timeout
       });
+      
+      console.log('Upload response:', res.data);
       setStatus(res.data.message || "✅ Files uploaded successfully.");
     } catch (err) {
-      console.error(err);
-      const errorMsg = err.response?.data?.message || "Check backend connection.";
+      console.error('Upload error:', err);
+      console.error('Error response:', err.response);
+      
+      let errorMsg = "Check backend connection.";
+      
+      if (err.response) {
+        // Server responded with error
+        errorMsg = err.response.data?.message || err.response.data?.error || errorMsg;
+        if (err.response.data?.details) {
+          console.error('Error details:', err.response.data.details);
+        }
+      } else if (err.request) {
+        // Request made but no response
+        errorMsg = "No response from server. Is the backend running?";
+      } else {
+        // Error setting up request
+        errorMsg = err.message;
+      }
+      
       setStatus(`❌ File upload failed: ${errorMsg}`);
     }
   };

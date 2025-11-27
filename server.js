@@ -29,14 +29,27 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage });
+const upload = multer({ 
+    storage,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only CSV files are allowed!'));
+        }
+    }
+});
 
 const runPythonScript = (scriptName, args = []) => {
     return new Promise((resolve, reject) => {
-        const pythonPath = 'python';
-        const scriptPath = path.join(__dirname, scriptName);
+        const pythonPath = 'C:\\Users\\DARSHAN\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\\python.exe';
+        const workingDir = path.join(__dirname, 'TimeTable-main');
+        const scriptPath = path.join(workingDir, scriptName);
 
-        const python = spawn(pythonPath, [scriptPath, ...args]);
+        const python = spawn(pythonPath, [scriptPath, ...args], { cwd: workingDir });
 
         let stdout = '';
         let stderr = '';
@@ -84,8 +97,9 @@ const getGeneratedFiles = () => {
     ];
 
     possibleFiles.forEach(file => {
-        const filePath = path.join(__dirname, file);
+        const filePath = path.join(__dirname, 'TimeTable-main', file);
         if (fs.existsSync(filePath)) {
+            // Return just the filename for simplicity
             files.push(file);
         }
     });
@@ -96,9 +110,19 @@ const getGeneratedFiles = () => {
 app.post('/upload', upload.fields([
     { name: 'combined', maxCount: 1 },
     { name: 'rooms', maxCount: 1 }
-]), (req, res) => {
+]), async (req, res) => {
     try {
+        console.log('=== Upload request received ===');
+        console.log('Request files:', req.files);
+        console.log('Request body:', req.body);
+        console.log('Request headers:', req.headers);
+        
         if (!req.files || !req.files.combined || !req.files.rooms) {
+            console.error('Missing files:', { 
+                hasFiles: !!req.files, 
+                hasCombined: !!req.files?.combined, 
+                hasRooms: !!req.files?.rooms 
+            });
             return res.status(400).json({
                 message: 'Please upload both combined.csv and rooms.csv files.'
             });
@@ -106,11 +130,32 @@ app.post('/upload', upload.fields([
 
         const combinedSource = req.files.combined[0].path;
         const roomsSource = req.files.rooms[0].path;
-        const combinedDest = path.join(__dirname, 'combined.csv');
-        const roomsDest = path.join(__dirname, 'rooms.csv');
+        const combinedDest = path.join(__dirname, 'TimeTable-main', 'combined.csv');
+        const roomsDest = path.join(__dirname, 'TimeTable-main', 'rooms.csv');
 
-        fs.copyFileSync(combinedSource, combinedDest);
-        fs.copyFileSync(roomsSource, roomsDest);
+        console.log('Copying files:', { combinedSource, combinedDest, roomsSource, roomsDest });
+
+        // Use async file operations with retry logic for OneDrive sync issues
+        const copyFileWithRetry = async (src, dest, retries = 3) => {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    // Read source file
+                    const data = await fs.promises.readFile(src);
+                    // Write to destination
+                    await fs.promises.writeFile(dest, data);
+                    return;
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                    // Wait before retry (exponential backoff)
+                    await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, i)));
+                }
+            }
+        };
+
+        await copyFileWithRetry(combinedSource, combinedDest);
+        await copyFileWithRetry(roomsSource, roomsDest);
+
+        console.log('Files copied successfully');
 
         res.json({
             message: '✅ Files uploaded successfully!',
@@ -120,17 +165,37 @@ app.post('/upload', upload.fields([
             }
         });
     } catch (error) {
-        console.error('Upload error:', error);
-        res.status(500).json({ message: 'File upload failed.', error: error.message });
+        console.error('=== Upload error ===');
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        console.error('Error details:', error);
+        res.status(500).json({ 
+            message: 'File upload failed.', 
+            error: error.message,
+            details: error.toString()
+        });
     }
+});
+
+// Add error handling middleware for multer errors
+app.use((error, req, res, next) => {
+    if (error instanceof multer.MulterError) {
+        console.error('Multer error:', error);
+        return res.status(400).json({ 
+            message: 'File upload error', 
+            error: error.message,
+            code: error.code
+        });
+    }
+    next(error);
 });
 
 app.post('/generate-timetable', async (req, res) => {
     try {
         console.log('Generating timetable...');
 
-        const combinedPath = path.join(__dirname, 'combined.csv');
-        const roomsPath = path.join(__dirname, 'rooms.csv');
+        const combinedPath = path.join(__dirname, 'TimeTable-main', 'combined.csv');
+        const roomsPath = path.join(__dirname, 'TimeTable-main', 'rooms.csv');
 
         if (!fs.existsSync(combinedPath) || !fs.existsSync(roomsPath)) {
             return res.status(400).json({
@@ -160,7 +225,7 @@ app.post('/generate-exam', async (req, res) => {
         console.log('Generating exam timetable...');
         console.log('Request body:', JSON.stringify(req.body, null, 2));
 
-        const combinedPath = path.join(__dirname, 'combined.csv');
+        const combinedPath = path.join(__dirname, 'TimeTable-main', 'combined.csv');
 
         if (!fs.existsSync(combinedPath)) {
             return res.status(400).json({
@@ -169,8 +234,10 @@ app.post('/generate-exam', async (req, res) => {
         }
 
         const examDates = req.body.dates || req.body.examDates;
+        const examConfig = req.body.config?.exam_settings;
         
-        const examDatesPath = path.join(__dirname, 'exam_dates.json');
+        // Save exam dates to TimeTable-main directory
+        const examDatesPath = path.join(__dirname, 'TimeTable-main', 'exam_dates.json');
         if (examDates && Array.isArray(examDates) && examDates.length > 0) {
             fs.writeFileSync(examDatesPath, JSON.stringify({ dates: examDates }, null, 2), 'utf8');
             console.log(`Exam dates provided: ${examDates.join(', ')}`);
@@ -178,6 +245,27 @@ app.post('/generate-exam', async (req, res) => {
             fs.writeFileSync(examDatesPath, JSON.stringify({ dates: [] }, null, 2), 'utf8');
             console.log('No exam dates provided, using defaults');
         }
+
+        // Save exam config to TimeTable-main directory
+        const examConfigPath = path.join(__dirname, 'TimeTable-main', 'exam_config.json');
+        const configData = {
+            exam_duration_minutes: 180,
+            exam_slots_per_day: 2,
+            morning_slot_start: "09:00",
+            afternoon_slot_start: "14:00",
+            enabled_slots: ['morning', 'afternoon']
+        };
+        
+        // Apply UI config if provided
+        if (examConfig) {
+            if (examConfig.enabled_slots && Array.isArray(examConfig.enabled_slots)) {
+                configData.enabled_slots = examConfig.enabled_slots;
+                configData.exam_slots_per_day = examConfig.enabled_slots.length;
+            }
+        }
+        
+        fs.writeFileSync(examConfigPath, JSON.stringify(configData, null, 2), 'utf8');
+        console.log('Exam config saved:', configData);
 
         await runPythonScript('exam_timetable.py');
 
@@ -204,13 +292,22 @@ app.get('/download', (req, res) => {
             return res.status(400).json({ message: 'File name is required.' });
         }
 
-        const filePath = path.join(__dirname, fileName);
+        // Check in TimeTable-main directory first
+        let filePath = path.join(__dirname, 'TimeTable-main', fileName);
+        
+        // If not found, check root directory
+        if (!fs.existsSync(filePath)) {
+            filePath = path.join(__dirname, fileName);
+        }
 
         if (!fs.existsSync(filePath)) {
             return res.status(404).json({ message: 'File not found.' });
         }
 
-        res.download(filePath, fileName, (err) => {
+        // Extract just the filename for download
+        const downloadName = path.basename(fileName);
+
+        res.download(filePath, downloadName, (err) => {
             if (err) {
                 console.error('Download error:', err);
                 res.status(500).json({ message: 'File download failed.' });

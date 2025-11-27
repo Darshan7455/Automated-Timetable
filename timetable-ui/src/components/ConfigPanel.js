@@ -3,6 +3,8 @@ import React, { useState } from "react";
 export default function ConfigPanel({ config, setConfig }) {
   const [isOpen, setIsOpen] = useState(false);
 
+  console.log("ConfigPanel rendered, config:", config);
+
   const updateConfig = (section, key, value) => {
     setConfig({
       ...config,
@@ -28,13 +30,24 @@ export default function ConfigPanel({ config, setConfig }) {
 
   if (!isOpen) {
     return (
-      <button 
-        className="action-button"
-        onClick={() => setIsOpen(true)}
-        style={{ backgroundColor: "#6c757d", marginTop: "20px" }}
-      >
-        ⚙️ Open Configuration Panel
-      </button>
+      <div style={{ width: "100%", display: "flex", justifyContent: "center", margin: "20px 0" }}>
+        <button 
+          className="action-button"
+          onClick={() => setIsOpen(true)}
+          style={{ 
+            backgroundColor: "#6c757d", 
+            color: "#ffffff",
+            padding: "12px 24px",
+            fontSize: "16px",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "bold"
+          }}
+        >
+          ⚙️ Open Configuration Panel
+        </button>
+      </div>
     );
   }
 
@@ -166,6 +179,51 @@ export default function ConfigPanel({ config, setConfig }) {
             />
             <small style={{ color: "#9ca3af" }}>({(config.duration_constants?.tutorial_slots || 2) * 30} minutes)</small>
           </div>
+        </div>
+      </div>
+
+      {/* Exam Configuration */}
+      <div style={{ marginBottom: "25px", padding: "15px", backgroundColor: "rgba(0, 0, 0, 0.6)", borderRadius: "8px", border: "1px solid #2d2d2d" }}>
+        <h3 style={{ marginTop: 0, color: "#9333ea" }}>📝 Exam Settings</h3>
+        <div style={{ marginBottom: "15px" }}>
+          <label style={{ display: "block", fontWeight: "bold", marginBottom: "10px" }}>
+            Enabled Exam Slots:
+          </label>
+          <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+            <label style={{ display: "flex", alignItems: "center", fontWeight: "normal" }}>
+              <input
+                type="checkbox"
+                checked={config.exam_settings?.enabled_slots?.includes('morning') ?? true}
+                onChange={(e) => {
+                  const currentSlots = config.exam_settings?.enabled_slots || ['morning', 'afternoon'];
+                  const newSlots = e.target.checked 
+                    ? [...new Set([...currentSlots, 'morning'])]
+                    : currentSlots.filter(s => s !== 'morning');
+                  updateConfig("exam_settings", "enabled_slots", newSlots.length > 0 ? newSlots : ['morning']);
+                }}
+                style={{ marginRight: "8px" }}
+              />
+              Morning Slot (9:00 AM)
+            </label>
+            <label style={{ display: "flex", alignItems: "center", fontWeight: "normal" }}>
+              <input
+                type="checkbox"
+                checked={config.exam_settings?.enabled_slots?.includes('afternoon') ?? true}
+                onChange={(e) => {
+                  const currentSlots = config.exam_settings?.enabled_slots || ['morning', 'afternoon'];
+                  const newSlots = e.target.checked 
+                    ? [...new Set([...currentSlots, 'afternoon'])]
+                    : currentSlots.filter(s => s !== 'afternoon');
+                  updateConfig("exam_settings", "enabled_slots", newSlots.length > 0 ? newSlots : ['afternoon']);
+                }}
+                style={{ marginRight: "8px" }}
+              />
+              Afternoon Slot (2:00 PM)
+            </label>
+          </div>
+          <small style={{ color: "#9ca3af", display: "block", marginTop: "10px" }}>
+            ℹ️ Select which time slots to use for exams. You can choose one or both.
+          </small>
         </div>
       </div>
 

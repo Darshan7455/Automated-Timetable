@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "install:all": "npm install && npm --prefix timetable-ui install",
-    "start": "node server.js",
-    "start:ui": "npm --prefix timetable-ui start",
-    "dev": "npm run start:ui",
-    "dev:all": "concurrently \"npm start\" \"npm run start:ui\""
+    "install:all": "cd TimeTable-main && npm install && npm --prefix timetable-ui install",
+    "start": "cd TimeTable-main && node server.js",
+    "start:ui": "cd TimeTable-main && npm --prefix timetable-ui start",
+    "dev": "cd TimeTable-main && npm run start:ui",
+    "dev:all": "cd TimeTable-main && concurrently \"npm start\" \"npm run start:ui\""
   },
   "dependencies": {
     "cors": "^2.8.5",

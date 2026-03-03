@@ -2,6 +2,21 @@
 
 This module generates exam schedules from course data, with configurable time slots and room assignments.
 
+## 🚀 Quick Start: Adding New Subjects
+
+**The timetable system automatically processes any course you add to `combined.csv`!**
+
+### Simple 3-Step Process:
+1. Add a row to `combined.csv` with course details
+2. Run `python TT_gen.py`
+3. Your course is automatically scheduled! ✅
+
+### Detailed Guides:
+- **[Quick Example →](QUICK_ADD_SUBJECT_EXAMPLE.md)** - Step-by-step example
+- **[Complete Guide →](HOW_TO_ADD_SUBJECTS.md)** - All features explained
+- **[Visual Workflow →](VISUAL_WORKFLOW.md)** - Visual guide with examples
+- **[CSV Configuration →](CSV_INPUT_GUIDE.md)** - Colors and room settings
+
 ## Setup
 
 Requirements:

@@ -30,6 +30,21 @@ def load_config():
             pass
     return EXAM_DURATION_HOURS, EXAM_SLOTS_PER_DAY
 
+def load_excluded_rooms():
+    """Load excluded rooms from excluded_rooms.csv"""
+    excluded = []
+    try:
+        excluded_df = pd.read_csv('excluded_rooms.csv')
+        excluded = excluded_df['roomNumber'].tolist()
+        print(f"Loaded {len(excluded)} excluded rooms from excluded_rooms.csv")
+    except FileNotFoundError:
+        print("Info: excluded_rooms.csv not found, using default excluded rooms")
+        excluded = ['C002', 'C003', 'C004']
+    except Exception as e:
+        print(f"Warning: Error loading excluded_rooms.csv: {e}, using defaults")
+        excluded = ['C002', 'C003', 'C004']
+    return excluded
+
 def parse_dates(date_input):
     """Parse exam dates from various input formats"""
     dates = []
@@ -195,7 +210,7 @@ def calculate_required_rooms_with_sharing(course, rooms, room_capacity_info):
     required_rooms = []
     remaining_students = total_students
     available_rooms = []
-    excluded_rooms = ['C002', 'C003', 'C004']
+    excluded_rooms = load_excluded_rooms()
     
     for room_id, usage_info in room_capacity_info.items():
         if room_id in rooms and usage_info['remaining'] > 0:
@@ -234,7 +249,7 @@ def calculate_required_rooms(course, rooms, available_rooms_filter=None):
     required_rooms = []
     remaining_students = total_students
     available_rooms = []
-    excluded_rooms = ['C002', 'C003', 'C004']  # Large halls to exclude
+    excluded_rooms = load_excluded_rooms()  # Large halls to exclude
     
     for room_id, room_info in rooms.items():
         room_type = room_info['type'].upper()
@@ -324,7 +339,7 @@ def determine_unscheduled_reason(course, exam_dates, time_slots, exam_schedule, 
     if missing_rooms:
         return f"Required rooms not found in rooms.csv: {', '.join(missing_rooms)}"
     available_room_capacity = 0
-    excluded_rooms = ['C002', 'C003', 'C004']
+    excluded_rooms = load_excluded_rooms()
     
     for room_id, room_info in rooms.items():
         room_type = room_info['type'].upper()
@@ -404,10 +419,10 @@ def generate_exam_timetable(exam_dates, exam_duration_hours, slots_per_day):
         room_usage[date] = {}
         for slot in time_slots:
             room_usage[date][slot] = {}
+            excluded_rooms = load_excluded_rooms()
             for room_id, room_info in rooms.items():
                 room_type = room_info['type'].upper()
                 room_number = room_info.get('roomNumber', '')
-                excluded_rooms = ['C002', 'C003', 'C004']
                 if room_type == 'LECTURE_ROOM' and room_number not in excluded_rooms:
                     room_usage[date][slot][room_id] = {'remaining': room_info['capacity'], 'courses': []}
     max_passes = 5  # Try up to 5 passes to schedule remaining exams

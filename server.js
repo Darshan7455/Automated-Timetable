@@ -96,11 +96,22 @@ const getGeneratedFiles = () => {
         'exam_timetable.xlsx'
     ];
 
+    // Check in multiple locations
+    const searchDirs = [
+        path.join(__dirname, 'outputs'),
+        __dirname,
+        path.join(__dirname, 'TimeTable-main')
+    ];
+
     possibleFiles.forEach(file => {
-        const filePath = path.join(__dirname, 'TimeTable-main', file);
-        if (fs.existsSync(filePath)) {
-            // Return just the filename for simplicity
-            files.push(file);
+        for (const dir of searchDirs) {
+            const filePath = path.join(dir, file);
+            if (fs.existsSync(filePath)) {
+                if (!files.includes(file)) {
+                    files.push(file);
+                }
+                break;
+            }
         }
     });
 
@@ -234,9 +245,7 @@ app.post('/generate-exam', async (req, res) => {
         }
 
         const examDates = req.body.dates || req.body.examDates;
-        const examConfig = req.body.config?.exam_settings;
         
-        // Save exam dates to TimeTable-main directory
         const examDatesPath = path.join(__dirname, 'TimeTable-main', 'exam_dates.json');
         if (examDates && Array.isArray(examDates) && examDates.length > 0) {
             fs.writeFileSync(examDatesPath, JSON.stringify({ dates: examDates }, null, 2), 'utf8');
@@ -245,27 +254,6 @@ app.post('/generate-exam', async (req, res) => {
             fs.writeFileSync(examDatesPath, JSON.stringify({ dates: [] }, null, 2), 'utf8');
             console.log('No exam dates provided, using defaults');
         }
-
-        // Save exam config to TimeTable-main directory
-        const examConfigPath = path.join(__dirname, 'TimeTable-main', 'exam_config.json');
-        const configData = {
-            exam_duration_minutes: 180,
-            exam_slots_per_day: 2,
-            morning_slot_start: "09:00",
-            afternoon_slot_start: "14:00",
-            enabled_slots: ['morning', 'afternoon']
-        };
-        
-        // Apply UI config if provided
-        if (examConfig) {
-            if (examConfig.enabled_slots && Array.isArray(examConfig.enabled_slots)) {
-                configData.enabled_slots = examConfig.enabled_slots;
-                configData.exam_slots_per_day = examConfig.enabled_slots.length;
-            }
-        }
-        
-        fs.writeFileSync(examConfigPath, JSON.stringify(configData, null, 2), 'utf8');
-        console.log('Exam config saved:', configData);
 
         await runPythonScript('exam_timetable.py');
 
@@ -292,25 +280,34 @@ app.get('/download', (req, res) => {
             return res.status(400).json({ message: 'File name is required.' });
         }
 
-        // Check in TimeTable-main directory first
-        let filePath = path.join(__dirname, 'TimeTable-main', fileName);
-        
-        // If not found, check root directory
-        if (!fs.existsSync(filePath)) {
-            filePath = path.join(__dirname, fileName);
+        // Check multiple possible locations for the file
+        const possiblePaths = [
+            path.join(__dirname, 'outputs', fileName),
+            path.join(__dirname, fileName),
+            path.join(__dirname, 'TimeTable-main', fileName)
+        ];
+
+        let filePath = null;
+        for (const checkPath of possiblePaths) {
+            if (fs.existsSync(checkPath)) {
+                filePath = checkPath;
+                console.log(`Found file at: ${filePath}`);
+                break;
+            }
         }
 
-        if (!fs.existsSync(filePath)) {
+        if (!filePath) {
+            console.error(`File not found: ${fileName}`);
+            console.error(`Checked paths:`, possiblePaths);
             return res.status(404).json({ message: 'File not found.' });
         }
 
-        // Extract just the filename for download
-        const downloadName = path.basename(fileName);
-
-        res.download(filePath, downloadName, (err) => {
+        res.download(filePath, fileName, (err) => {
             if (err) {
                 console.error('Download error:', err);
-                res.status(500).json({ message: 'File download failed.' });
+                if (!res.headersSent) {
+                    res.status(500).json({ message: 'File download failed.' });
+                }
             }
         });
     } catch (error) {

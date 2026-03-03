@@ -37,7 +37,8 @@
     },
     "scheduling_preferences": {
         "elective_slots": [
-            "09:00"
+            "14:30",
+            "16:00"
         ],
         "allow_back_to_back_lectures": true,
         "max_lectures_per_day": 6,

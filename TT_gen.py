@@ -65,11 +65,92 @@ ELECTIVE_SLOT_START_TIMES = [parse_time_config(t) for t in elective_times]
 ELECTIVE_SLOT_INDICES = []
 ELECTIVE_SLOT_SET = set()
 ELECTIVE_USE_LAST = False
-COLOR_PALETTE = [
-    "FF5733", "33FF57", "3357FF", "FF33A8", "33FFF7", 
-    "F7FF33", "FF33F7", "33F7FF", "FFB533", "B533FF",
-    "33FFB5", "FF5F33", "335FFF", "B5FF33", "FF33B5"
-]
+
+def load_colors():
+    """Load color configurations from colors.csv"""
+    colors = {
+        'palette': [],
+        'subject': [],
+        'basket_group': {}
+    }
+    try:
+        colors_df = pd.read_csv('colors.csv')
+        for _, row in colors_df.iterrows():
+            color_type = str(row['color_type']).lower()
+            hex_color = str(row['hex_color'])
+            
+            if color_type == 'palette':
+                colors['palette'].append(hex_color)
+            elif color_type == 'subject':
+                colors['subject'].append(hex_color)
+            elif color_type == 'basket_group':
+                identifier = str(row['identifier'])
+                colors['basket_group'][identifier] = hex_color
+        
+        if not colors['palette']:
+            print("Warning: No palette colors found in colors.csv, using defaults")
+            colors['palette'] = [
+                "FF5733", "33FF57", "3357FF", "FF33A8", "33FFF7", 
+                "F7FF33", "FF33F7", "33F7FF", "FFB533", "B533FF",
+                "33FFB5", "FF5F33", "335FFF", "B5FF33", "FF33B5"
+            ]
+        
+        if not colors['subject']:
+            print("Warning: No subject colors found in colors.csv, using defaults")
+            colors['subject'] = [
+                "FF6B6B", "4ECDC4", "FF9F1C", "5D5FEF", "45B7D1", 
+                "F72585", "7209B7", "3A0CA3", "4361EE", "4CC9F0",
+                "06D6A0", "FFD166", "EF476F", "118AB2", "073B4C"
+            ]
+        
+        if not colors['basket_group']:
+            print("Warning: No basket group colors found in colors.csv, using defaults")
+            colors['basket_group'] = {
+                'B1': "FFA07A", 'B2': "98FB98", 'B3': "87CEFA",
+                'B4': "FFD700", 'B5': "DA70D6", 'B6': "20B2AA",
+                'B7': "FF6347", 'B8': "8A2BE2", 'B9': "32CD32"
+            }
+        
+        print(f"Loaded {len(colors['palette'])} palette colors, {len(colors['subject'])} subject colors, and {len(colors['basket_group'])} basket group colors")
+    except FileNotFoundError:
+        print("Info: colors.csv not found, using default colors")
+        colors['palette'] = [
+            "FF5733", "33FF57", "3357FF", "FF33A8", "33FFF7", 
+            "F7FF33", "FF33F7", "33F7FF", "FFB533", "B533FF",
+            "33FFB5", "FF5F33", "335FFF", "B5FF33", "FF33B5"
+        ]
+        colors['subject'] = [
+            "FF6B6B", "4ECDC4", "FF9F1C", "5D5FEF", "45B7D1", 
+            "F72585", "7209B7", "3A0CA3", "4361EE", "4CC9F0",
+            "06D6A0", "FFD166", "EF476F", "118AB2", "073B4C"
+        ]
+        colors['basket_group'] = {
+            'B1': "FFA07A", 'B2': "98FB98", 'B3': "87CEFA",
+            'B4': "FFD700", 'B5': "DA70D6", 'B6': "20B2AA",
+            'B7': "FF6347", 'B8': "8A2BE2", 'B9': "32CD32"
+        }
+    except Exception as e:
+        print(f"Error loading colors.csv: {e}, using default colors")
+        colors['palette'] = [
+            "FF5733", "33FF57", "3357FF", "FF33A8", "33FFF7", 
+            "F7FF33", "FF33F7", "33F7FF", "FFB533", "B533FF",
+            "33FFB5", "FF5F33", "335FFF", "B5FF33", "FF33B5"
+        ]
+        colors['subject'] = [
+            "FF6B6B", "4ECDC4", "FF9F1C", "5D5FEF", "45B7D1", 
+            "F72585", "7209B7", "3A0CA3", "4361EE", "4CC9F0",
+            "06D6A0", "FFD166", "EF476F", "118AB2", "073B4C"
+        ]
+        colors['basket_group'] = {
+            'B1': "FFA07A", 'B2': "98FB98", 'B3': "87CEFA",
+            'B4': "FFD700", 'B5': "DA70D6", 'B6': "20B2AA",
+            'B7': "FF6347", 'B8': "8A2BE2", 'B9': "32CD32"
+        }
+    
+    return colors
+
+COLOR_CONFIG = load_colors()
+COLOR_PALETTE = COLOR_CONFIG['palette']
 try:
     rooms_df = pd.read_csv('rooms.csv')
     lecture_rooms = rooms_df[rooms_df['type'] == 'LECTURE_ROOM']['roomNumber'].tolist()
@@ -288,26 +369,25 @@ def generate_all_timetables():
     ta_allocations = {}  # Track TA assignments {course_code: [TA names]}
     elective_schedule_sync = {}  # {(semester, course_code): (day, start_slot)}
     
-    subject_colors = [
-        "FF6B6B", "4ECDC4", "FF9F1C", "5D5FEF", "45B7D1", 
-        "F72585", "7209B7", "3A0CA3", "4361EE", "4CC9F0",
-        "06D6A0", "FFD166", "EF476F", "118AB2", "073B4C"
-    ]
-    basket_group_colors = {
-        'B1': "FFA07A",  
-        'B2': "98FB98",  
-        'B3': "87CEFA",  
-        'B4': "FFD700",  
-        'B5': "DA70D6",  
-        'B6': "20B2AA",  
-        'B7': "FF6347",  
-        'B8': "8A2BE2",  
-        'B9': "32CD32"   
-    }
+    # Load colors from CSV file
+    color_config = load_colors()
+    subject_colors = color_config['subject']
+    basket_group_colors = color_config['basket_group']
     self_study_courses = []
     all_semesters = sorted(set(int(str(sem)[0]) for sem in df['Semester'].unique()))
     lunch_breaks = calculate_lunch_breaks(all_semesters)
     row_index = 5  
+    
+    # Log total courses loaded
+    total_courses = len(df)
+    scheduled_courses = len(df[(df['Schedule'].fillna('Yes').str.upper() == 'YES') | (df['Schedule'].isna())])
+    print(f"\n{'='*60}")
+    print(f"COURSE LOADING SUMMARY")
+    print(f"{'='*60}")
+    print(f"Total courses in combined.csv: {total_courses}")
+    print(f"Courses marked for scheduling: {scheduled_courses}")
+    print(f"Courses excluded (Schedule=No): {total_courses - scheduled_courses}")
+    print(f"{'='*60}\n")
     
     for department in df['Department'].unique():
         course_faculty_assignments = {}
@@ -319,6 +399,13 @@ def generate_all_timetables():
             
             if courses.empty:
                 continue
+            
+            # Log courses being processed for this department-semester
+            print(f"\nProcessing {department} Semester {semester}: {len(courses)} courses")
+            for _, course in courses.iterrows():
+                ltp_info = f"L={course['L']}, T={course['T']}, P={course['P']}"
+                print(f"  - {course['Course Code']}: {course['Course Name']} ({ltp_info})")
+            
             elective_courses = []
             core_courses = []
             
@@ -410,8 +497,6 @@ def generate_all_timetables():
                     code = str(course['Course Code'])
                     name = str(course['Course Name'])
                     faculty = str(course['Faculty'])
-                    if code.startswith('B0'):
-                        print(f"DEBUG: Processing B0 course: {code} - {name}, Faculty: {faculty}, Section: {section}")
                     
                     if not any(code.startswith(f'B{i}') for i in range(1, 10)):
                         if code in course_faculty_assignments:
@@ -432,37 +517,28 @@ def generate_all_timetables():
                     
                     is_elective_course_flag = is_elective_or_minor_course(code, name, department)
                     is_basket = is_basket_course(code)
-                    if code.startswith('B0'):
-                        print(f"DEBUG: B0 course {code} - Lecture sessions: {lecture_sessions}, Is elective: {is_elective_course_flag}, Is basket: {is_basket}")
                     
                     if faculty not in professor_schedule:
                         professor_schedule[faculty] = {day: set() for day in range(len(DAYS))}
-                    for _ in range(lecture_sessions):
+                    for lecture_session_num in range(lecture_sessions):
                         scheduled = False
                         attempts = 0
                         candidate_slots = get_candidate_start_slots(LECTURE_DURATION, is_elective_course_flag)
                         if not candidate_slots:
                             break
                         if is_basket or is_elective_course_flag:
-                            sync_key = (semester, code)  # Semester-level sync for electives
+                            sync_key = (department, semester, code, 'LEC', lecture_session_num)  # Include session number for multi-session courses
                         else:
-                            sync_key = (department, semester, code)  # Department-level for core courses
-                        if code.startswith('B0'):
-                            print(f"DEBUG: B0 course {code} section {section} - Checking sync: is_basket={is_basket}, is_elective={is_elective_course_flag}, num_sections={num_sections}, sync_key in dict={sync_key in elective_schedule_sync}")
+                            sync_key = (department, semester, code, 'LEC', lecture_session_num)  # Department-level for core courses
+                        
                         if (is_basket or is_elective_course_flag) and sync_key in elective_schedule_sync:
                             day, start_slot = elective_schedule_sync[sync_key]
-                            if code.startswith('B0'):
-                                print(f"DEBUG: B0 course {code} section {section} - Using synchronized slot: Day {day}, Slot {start_slot}")
                             if not check_faculty_course_gap(professor_schedule, timetable, faculty, code, day, start_slot):
                                 scheduled = False
-                                if code.startswith('B0'):
-                                    print(f"DEBUG: B0 course {code} section {section} - Failed faculty_course_gap check")
                             elif not check_faculty_daily_components(professor_schedule, faculty, day, 
                                                                department, semester, section, timetable,
                                                                code, 'LEC'):
                                 scheduled = False
-                                if code.startswith('B0'):
-                                    print(f"DEBUG: B0 course {code} section {section} - Failed faculty_daily_components check")
                             else:
                                 slots_free = True
                                 for i in range(LECTURE_DURATION):
@@ -478,8 +554,6 @@ def generate_all_timetables():
                                         slot_occupied or
                                         is_break_time(TIME_SLOTS[current_slot], semester)):
                                         slots_free = False
-                                        if code.startswith('B0'):
-                                            print(f"DEBUG: B0 course {code} section {section} - Sync path slots NOT free: slot={current_slot}, faculty_conflict={faculty_conflict}, slot_occupied={slot_occupied}, is_break={is_break_time(TIME_SLOTS[current_slot], semester)}")
                                         break
                                     if current_slot > 0:
                                         if is_lecture_scheduled(timetable, day, 
@@ -500,9 +574,6 @@ def generate_all_timetables():
                                                               day, start_slot, LECTURE_DURATION, 
                                                               rooms, batch_info, timetable, code)
                                     
-                                    if code.startswith('B0'):
-                                        print(f"DEBUG: B0 course {code} section {section} - Sync path slots_free: {slots_free}, room_id: {room_id}")
-                                    
                                     if room_id:
                                         classroom = room_id
                                         for i in range(LECTURE_DURATION):
@@ -514,13 +585,8 @@ def generate_all_timetables():
                                             timetable[day][start_slot+i]['faculty'] = faculty if i == 0 else ''
                                             timetable[day][start_slot+i]['classroom'] = classroom if i == 0 else ''
                                         scheduled = True
-                                        
-                                        if code.startswith('B0'):
-                                            print(f"DEBUG: B0 course {code} section {section} SCHEDULED via SYNC at Day {day}, Slot {start_slot}, Room {classroom}")
+                        
                         if not scheduled:
-                            if code.startswith('B0'):
-                                print(f"DEBUG: B0 course {code} section {section} - Starting normal scheduling, attempts: {attempts}")
-                            
                             while not scheduled and attempts < 1000:
                                 day = random.randint(0, len(DAYS)-1)
                                 start_slot = random.choice(candidate_slots)
@@ -575,13 +641,8 @@ def generate_all_timetables():
                                             timetable[day][start_slot+i]['faculty'] = faculty if i == 0 else ''
                                             timetable[day][start_slot+i]['classroom'] = classroom if i == 0 else ''
                                         scheduled = True
-                                        if code.startswith('B0'):
-                                            print(f"DEBUG: B0 course {code} section {section} SCHEDULED at Day {day}, Slot {start_slot}, Room {classroom}")
-                                            print(f"DEBUG: B0 course {code} section {section} - Checking registration: is_basket={is_basket}, is_elective={is_elective_course_flag}, sync_key in dict={sync_key in elective_schedule_sync}")
-                                        if (is_basket or is_elective_course_flag) and sync_key not in elective_schedule_sync:
+                                    if (is_basket or is_elective_course_flag) and sync_key not in elective_schedule_sync:
                                             elective_schedule_sync[sync_key] = (day, start_slot)
-                                            if code.startswith('B0'):
-                                                print(f"DEBUG: B0 course {code} - Registered sync schedule for semester {semester}: Day {day}, Slot {start_slot}")
                                 attempts += 1
                         if not scheduled:
                                 detailed_reason = unscheduled_reason(course, department, semester, 
@@ -591,48 +652,93 @@ def generate_all_timetables():
                                     UnscheduledComponent(department, semester, code, name, 
                                                        faculty, 'LEC', 1, section, detailed_reason)
                                 )
-                    for _ in range(tutorial_sessions):
+                    for tutorial_session_num in range(tutorial_sessions):
                         scheduled = False
                         attempts = 0
                         candidate_slots = get_candidate_start_slots(TUTORIAL_DURATION, is_elective_course_flag)
                         if not candidate_slots:
                             break
-                        while not scheduled and attempts < 1000:
-                            day = random.randint(0, len(DAYS)-1)
-                            start_slot = random.choice(candidate_slots)
-                            if not check_faculty_course_gap(professor_schedule, timetable, faculty, code, day, start_slot):
-                                attempts += 1
-                                continue
-                            if not check_faculty_daily_components(professor_schedule, faculty, day,
+                        
+                        # Sync key for electives/basket courses - include session number
+                        if is_basket or is_elective_course_flag:
+                            tut_sync_key = (department, semester, code, 'TUT', tutorial_session_num)
+                        else:
+                            tut_sync_key = None
+                        
+                        # Check if already scheduled for another section
+                        if tut_sync_key and tut_sync_key in elective_schedule_sync:
+                            day, start_slot = elective_schedule_sync[tut_sync_key]
+                            
+                            scheduled = False
+                            if not check_faculty_daily_components(professor_schedule, faculty, day, 
                                                                department, semester, section, timetable,
                                                                code, 'TUT'):
+                                scheduled = False
+                            else:
+                                slots_free = True
+                                for i in range(TUTORIAL_DURATION):
+                                    if (start_slot+i in professor_schedule[faculty][day] or 
+                                        timetable[day][start_slot+i]['type'] is not None or
+                                        is_break_time(TIME_SLOTS[start_slot+i], semester)):
+                                        slots_free = False
+                                        break
+                                
+                                if slots_free:
+                                    room_id = find_suitable_room('LECTURE_ROOM', department, semester, 
+                                                              day, start_slot, TUTORIAL_DURATION, 
+                                                              rooms, batch_info, timetable, code)
+                                    
+                                    if room_id:
+                                        classroom = room_id
+                                        for i in range(TUTORIAL_DURATION):
+                                            professor_schedule[faculty][day].add(start_slot+i)
+                                            timetable[day][start_slot+i]['type'] = 'TUT'
+                                            timetable[day][start_slot+i]['code'] = code if i == 0 else ''
+                                            timetable[day][start_slot+i]['name'] = name if i == 0 else ''
+                                            timetable[day][start_slot+i]['faculty'] = faculty if i == 0 else ''
+                                            timetable[day][start_slot+i]['classroom'] = classroom if i == 0 else ''
+                                        scheduled = True
+                        
+                        if not scheduled:
+                            while not scheduled and attempts < 1000:
+                                day = random.randint(0, len(DAYS)-1)
+                                start_slot = random.choice(candidate_slots)
+                                if not check_faculty_course_gap(professor_schedule, timetable, faculty, code, day, start_slot):
+                                    attempts += 1
+                                    continue
+                                if not check_faculty_daily_components(professor_schedule, faculty, day,
+                                                                   department, semester, section, timetable,
+                                                                   code, 'TUT'):
+                                    attempts += 1
+                                    continue
+                                    
+                                slots_free = True
+                                for i in range(TUTORIAL_DURATION):
+                                    if (start_slot+i in professor_schedule[faculty][day] or 
+                                        timetable[day][start_slot+i]['type'] is not None or
+                                        is_break_time(TIME_SLOTS[start_slot+i], semester)):
+                                        slots_free = False
+                                        break
+                                
+                                if slots_free:
+                                    room_id = find_suitable_room('LECTURE_ROOM', department, semester, 
+                                                              day, start_slot, TUTORIAL_DURATION, 
+                                                              rooms, batch_info, timetable, code)
+                                    
+                                    if room_id:
+                                        classroom = room_id
+                                        for i in range(TUTORIAL_DURATION):
+                                            professor_schedule[faculty][day].add(start_slot+i)
+                                            timetable[day][start_slot+i]['type'] = 'TUT'
+                                            timetable[day][start_slot+i]['code'] = code if i == 0 else ''
+                                            timetable[day][start_slot+i]['name'] = name if i == 0 else ''
+                                            timetable[day][start_slot+i]['faculty'] = faculty if i == 0 else ''
+                                            timetable[day][start_slot+i]['classroom'] = classroom if i == 0 else ''
+                                        scheduled = True
+                                        # Register sync for electives/basket courses
+                                        if tut_sync_key and tut_sync_key not in elective_schedule_sync:
+                                            elective_schedule_sync[tut_sync_key] = (day, start_slot)
                                 attempts += 1
-                                continue
-                                
-                            slots_free = True
-                            for i in range(TUTORIAL_DURATION):
-                                if (start_slot+i in professor_schedule[faculty][day] or 
-                                    timetable[day][start_slot+i]['type'] is not None or
-                                    is_break_time(TIME_SLOTS[start_slot+i], semester)):
-                                    slots_free = False
-                                    break
-                            
-                            if slots_free:
-                                room_id = find_suitable_room('LECTURE_ROOM', department, semester, 
-                                                          day, start_slot, TUTORIAL_DURATION, 
-                                                          rooms, batch_info, timetable, code)
-                                
-                                if room_id:
-                                    classroom = room_id
-                                    for i in range(TUTORIAL_DURATION):
-                                        professor_schedule[faculty][day].add(start_slot+i)
-                                        timetable[day][start_slot+i]['type'] = 'TUT'
-                                        timetable[day][start_slot+i]['code'] = code if i == 0 else ''
-                                        timetable[day][start_slot+i]['name'] = name if i == 0 else ''
-                                        timetable[day][start_slot+i]['faculty'] = faculty if i == 0 else ''
-                                        timetable[day][start_slot+i]['classroom'] = classroom if i == 0 else ''
-                                    scheduled = True
-                            attempts += 1
                         if not scheduled:
                             detailed_reason = unscheduled_reason(course, department, semester, 
                                                               professor_schedule, rooms, 'TUT', attempts)
@@ -643,15 +749,30 @@ def generate_all_timetables():
                             )
                     if lab_sessions > 0:
                         room_type = get_required_room_type(course)
-                        for _ in range(lab_sessions):
+                        for lab_session_num in range(lab_sessions):
                             scheduled = False
                             attempts = 0
                             scheduling_reason = ""
-                            days = list(range(len(DAYS)))
-                            random.shuffle(days)
+                            
+                            # Sync key for electives/basket courses - include session number
+                            if is_basket or is_elective_course_flag:
+                                lab_sync_key = (department, semester, code, 'LAB', lab_session_num)
+                            else:
+                                lab_sync_key = None
+                            
+                            # Check if already scheduled for another section
+                            if lab_sync_key and lab_sync_key in elective_schedule_sync:
+                                day, start_slot = elective_schedule_sync[lab_sync_key]
+                                possible_slots = [start_slot]
+                                days = [day]
+                            else:
+                                days = list(range(len(DAYS)))
+                                random.shuffle(days)
+                                possible_slots = None
                             
                             for day in days:
-                                possible_slots = get_best_slots(timetable, professor_schedule, 
+                                if possible_slots is None:
+                                    possible_slots = get_best_slots(timetable, professor_schedule, 
                                                               faculty, day, LAB_DURATION, 
                                                               semester, department, is_elective_course_flag)
                                 
@@ -670,6 +791,9 @@ def generate_all_timetables():
                                             timetable[day][start_slot+i]['faculty'] = faculty if i == 0 else ''
                                             timetable[day][start_slot+i]['classroom'] = classroom if i == 0 else ''
                                         scheduled = True
+                                        # Register sync for electives/basket courses
+                                        if lab_sync_key and lab_sync_key not in elective_schedule_sync:
+                                            elective_schedule_sync[lab_sync_key] = (day, start_slot)
                                         break
                                 
                                 if scheduled:
@@ -1292,6 +1416,11 @@ def check_unscheduled_courses():
 
 def generate_faculty_timetables():
     
+    # Initialize TIME_SLOTS if not already done
+    global TIME_SLOTS
+    if not TIME_SLOTS:
+        initialize_time_slots()
+    
     try:
         wb = pd.ExcelFile('timetable_all_departments.xlsx')
         faculty_schedules = {}
@@ -1741,7 +1870,7 @@ def initialize_elective_slots():
     try:
         with open('config.json', 'r') as f:
             cfg = json.load(f)
-            slots = cfg.get('elective_slots')
+            slots = cfg.get('scheduling_preferences', {}).get('elective_slots')
             if slots and isinstance(slots, list):
                 parsed = []
                 for s in slots:
@@ -1767,7 +1896,7 @@ def initialize_elective_slots():
     try:
         with open('config.json', 'r') as f:
             cfg = json.load(f)
-            slots = cfg.get('elective_slots')
+            slots = cfg.get('scheduling_preferences', {}).get('elective_slots')
             if slots and isinstance(slots, list):
                 for s in slots:
                     if isinstance(s, str) and s.strip().upper() == 'LAST':
@@ -1790,7 +1919,8 @@ def get_candidate_start_slots(duration, is_elective):
             if max_start >= 0 and max_start not in candidates:
                 candidates.append(max_start)
         if candidates:
-            return sorted(set(candidates))
+            result = sorted(set(candidates))
+            return result
         return list(range(max_start + 1))
     non_elective_slots = []
     for slot in range(max_start + 1):
@@ -2315,7 +2445,7 @@ def calculate_required_slots(course):
         return 0, 0, 0, 0
     lecture_sessions = 0
     if l > 0:
-        lecture_sessions = max(1, round(l * 2/3))  
+        lecture_sessions = int(l)  # L directly represents number of lectures per week
     tutorial_sessions = t  
     lab_sessions = p // 2  
     self_study_sessions = s // 4 if (l > 0 or t > 0 or p > 0) else 0
@@ -2443,18 +2573,36 @@ def arrange_unscheduled_components(unscheduled_components, professor_schedule, t
             'LAB': LAB_DURATION,
             'SS': SELF_STUDY_DURATION
         }.get(comp.component_type, LECTURE_DURATION)
-        morning_slot_start = 0  # 9:00 AM corresponds to slot 0
-        morning_slot_duration = 3  # 9:00-10:30 is 3 slots (90 minutes)
-        candidate_slots = []
-        if duration <= morning_slot_duration:
-            candidate_slots.append(morning_slot_start)
-        other_slots = get_candidate_start_slots(duration, True)
-        if other_slots:
-            candidate_slots.extend([s for s in other_slots if s != morning_slot_start])
-        if not candidate_slots:
-            max_start = len(TIME_SLOTS) - duration
-            if max_start >= 0:
-                candidate_slots = list(range(max_start + 1))
+        
+        # Check if this is an elective/basket course
+        is_basket = is_basket_course(comp.code)
+        is_elective = is_elective_or_minor_course(comp.code, comp.name, comp.department)
+        
+        # For electives, ONLY use elective slots - don't add morning slot
+        if is_basket or is_elective:
+            candidate_slots = get_candidate_start_slots(duration, True)
+            if not candidate_slots:
+                max_start = len(TIME_SLOTS) - duration
+                if max_start >= 0:
+                    # Even as fallback, respect elective slots if configured
+                    if ELECTIVE_SLOT_INDICES:
+                        candidate_slots = [s for s in ELECTIVE_SLOT_INDICES if s <= max_start]
+                    else:
+                        candidate_slots = list(range(max_start + 1))
+        else:
+            # For non-electives, allow morning slot
+            morning_slot_start = 0  # 9:00 AM corresponds to slot 0
+            morning_slot_duration = 3  # 9:00-10:30 is 3 slots (90 minutes)
+            candidate_slots = []
+            if duration <= morning_slot_duration:
+                candidate_slots.append(morning_slot_start)
+            other_slots = get_candidate_start_slots(duration, False)
+            if other_slots:
+                candidate_slots.extend([s for s in other_slots if s != morning_slot_start])
+            if not candidate_slots:
+                max_start = len(TIME_SLOTS) - duration
+                if max_start >= 0:
+                    candidate_slots = list(range(max_start + 1))
 
         scheduled_flag = False
         faculty = comp.faculty
@@ -2495,20 +2643,17 @@ def arrange_unscheduled_components(unscheduled_components, professor_schedule, t
                     timetable[day_idx][start_slot + i]['name'] = comp.name if i == 0 else ''
                     timetable[day_idx][start_slot + i]['faculty'] = faculty if i == 0 else ''
                     timetable[day_idx][start_slot + i]['classroom'] = room_id if i == 0 else ''
-                if comp.code.startswith('B0'):
-                    print(f"DEBUG: B0 course {comp.code} section {comp.section} SCHEDULED in relaxed pass at Day {day_idx}, Slot {start_slot}, Room {room_id}")
+                
                 if elective_schedule_sync is not None:
                     is_basket = is_basket_course(comp.code)
                     is_elective = is_elective_or_minor_course(comp.code, comp.name, comp.department)
                     if is_basket or is_elective:
-                        sync_key = (comp.semester, comp.code)  # Semester-level sync
+                        sync_key = (comp.department, comp.semester, comp.code)  # Department-level sync for electives
                     else:
                         sync_key = (comp.department, comp.semester, comp.code)  # Department-level sync
                     
                     if (is_basket or is_elective) and sync_key not in elective_schedule_sync:
                         elective_schedule_sync[sync_key] = (day_idx, start_slot)
-                        if comp.code.startswith('B0'):
-                            print(f"DEBUG: B0 course {comp.code} - Registered sync schedule in relaxed pass for semester {comp.semester}: Day {day_idx}, Slot {start_slot}")
 
                 try:
                     unscheduled_components.remove(comp)
